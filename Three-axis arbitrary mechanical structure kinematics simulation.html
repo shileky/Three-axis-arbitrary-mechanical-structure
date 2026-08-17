@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三轴机械臂运动学仿真 v9.9</title>
+<style>
+:root{--bg:#eef3f8;--card:#ffffff;--panel:#f8fafc;--border:#dfe7f1;--accent:#2563eb;--accent-soft:#dbeafe;--txt:#1f2937;--dim:#64748b;--red:#ef4444;--green:#22c55e;--blue:#3b82f6;--amber:#f59e0b;--panel-w: 380px;--shadow:0 10px 24px rgba(15,23,42,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Microsoft YaHei',sans-serif;background:linear-gradient(180deg,#edf4fb 0%,#f7fafc 100%);color:var(--txt);overflow:hidden;height:100vh}
+#app{display:flex;height:100vh;gap:0;min-width:0}
+#panel{width:var(--panel-w);min-width:var(--panel-w);max-width:42vw;background:linear-gradient(180deg,#f8fafc,#f2f7fb);border-right:1px solid var(--border);overflow-y:auto;padding:12px 12px 28px;z-index:100;box-shadow:inset -1px 0 0 rgba(15,23,42,.03)}
+#panel::-webkit-scrollbar{width:6px}
+#panel::-webkit-scrollbar-thumb{background:#b9c7d9;border-radius:6px}
+.sec{background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:14px;padding:12px 12px 10px;margin-bottom:10px;box-shadow:0 4px 12px rgba(148,163,184,.08);transition:box-shadow .2s ease,transform .2s ease}
+.sec:hover{box-shadow:0 8px 18px rgba(148,163,184,.14);transform:translateY(-1px)}
+.sec h3{font-size:12px;color:#1d4ed8;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid rgba(208,213,221,.7);display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;letter-spacing:.2px}
+.sec h3 .fold-arrow{margin-left:auto;font-size:10px;color:#94a3b8;transition:transform .25s ease}
+.sec h3 .fold-arrow.collapsed{transform:rotate(-90deg)}
+.sec-body{overflow:hidden;transition:max-height .3s ease}
+.sec-body.collapsed{max-height:0!important;overflow:hidden;margin:0;padding:0}
+.row{display:flex;align-items:center;margin-bottom:6px;gap:6px}
+.row label{font-size:11px;color:#64748b;min-width:48px;flex-shrink:0;font-weight:500}
+.row input[type=range]{flex:1;height:4px;-webkit-appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+.row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 6px rgba(59,130,246,.5)}
+.row input[type=number]{width:62px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;color:var(--txt);padding:4px 5px;font-size:11px;text-align:center}
+.row input[type=number]:focus{border-color:var(--accent);outline:none}
+.ax{color:var(--red)!important}.ay{color:var(--green)!important}.az{color:var(--blue)!important}
+select{width:100%;background:#f8fafc;border:1px solid #cbd5e1;border-radius:7px;color:var(--txt);padding:7px 9px;font-size:11px;cursor:pointer;margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:7px 12px;border:none;border-radius:7px;font-size:11px;cursor:pointer;transition:all .2s;font-weight:600}
+.btn:active{transform:scale(.96)}
+.bp{background:var(--accent);color:#fff}.bp:hover{background:#2563eb}
+.bs{background:#10b981;color:#fff}.bs:hover{background:#059669}
+.bw{background:var(--amber);color:#1a1a1a}.bw:hover{background:#d97706}
+.bv{background:#8b5cf6;color:#fff}.bv:hover{background:#7c3aed}
+.br{background:#ef4444;color:#fff}.br:hover{background:#dc2626}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.note{font-size:10px;color:#94a3b8;margin-top:4px;line-height:1.5}
+.note.hi{color:#2563eb}
+.chk{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;color:#64748b}
+.chk input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px}
+.ut{display:flex;gap:2px;margin-bottom:8px}
+.ub{flex:1;padding:5px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;color:#64748b;font-size:11px;cursor:pointer;text-align:center;transition:all .15s;font-weight:500}
+.ub.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.vr{display:flex;gap:4px;align-items:center;margin-bottom:5px}
+.vr span{font-size:11px;min-width:18px;font-weight:700}
+.vr input{width:62px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;color:var(--txt);padding:4px 5px;font-size:11px;text-align:center}
+.vr input:focus{border-color:var(--accent);outline:none}
+.vr input.auto{border-color:var(--amber);background:#fefce8}
+.st{font-size:11px;color:var(--dim);margin:8px 0 5px;font-weight:600}
+input[type=color]{width:30px;height:22px;border:1px solid #cbd5e1;border-radius:4px;background:#f8fafc;cursor:pointer;padding:1px}
+.mode-tab{display:flex;gap:2px;margin-bottom:8px}
+.mt{flex:1;padding:5px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;color:#64748b;font-size:11px;cursor:pointer;text-align:center;transition:all .15s;font-weight:500}
+.mt.on{background:#10b981;color:#fff;border-color:#10b981}
+.tab-body{display:none}.tab-body.on{display:block}
+.link-grid{display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:3px 5px;align-items:center;font-size:11px}
+.link-grid .lh{color:var(--dim);font-weight:600;font-size:10px}
+.link-grid input,.link-grid select{width:54px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;color:var(--txt);padding:3px 4px;font-size:10px;text-align:center}
+.sep{height:1px;background:rgba(208,213,221,.5);margin:8px 0}
+.joint-block{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px 10px;margin-bottom:8px;transition:border-color .3s}
+.joint-block.locked{border-color:var(--amber);background:#fefce8}
+.jhead{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.jlabel{font-size:12px;font-weight:700;min-width:52px}
+.jval{font-family:Consolas,monospace;font-size:12px;color:#b45309;flex:1;text-align:right}
+.lbtn,.rbtn{width:28px;height:24px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:5px;cursor:pointer;font-size:12px;color:#64748b;transition:all .15s;line-height:1}
+.lbtn.on{background:var(--amber);border-color:var(--amber);color:#1a1a1a}
+.rbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.jtrack{position:relative;height:26px;background:#e2e8f0;border:1px solid #cbd5e1;border-radius:13px;margin-bottom:7px;cursor:pointer;user-select:none;touch-action:none}
+.tfill{position:absolute;top:0;bottom:0;background:rgba(59,130,246,.18);border-radius:13px;pointer-events:none}
+.mk{position:absolute;top:3px;bottom:3px;width:6px;border-radius:3px;transform:translateX(-50%);cursor:grab;z-index:2}
+.mk:active{cursor:grabbing}
+.mk.head{background:var(--green)}
+.mk.tail{background:var(--amber)}
+.thumb{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--accent);transform:translate(-50%,-50%);box-shadow:0 0 8px rgba(59,130,246,.7);cursor:grab;z-index:3}
+.thumb:active{cursor:grabbing}
+.thumb.locked-thumb{border-color:var(--amber);opacity:.5;cursor:not-allowed}
+.jinputs{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim)}
+.jinputs input{width:52px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;color:var(--txt);padding:3px 4px;font-size:10px;text-align:center}
+.jinputs input:focus{border-color:var(--accent);outline:none}
+#viewport{flex:1;position:relative;background:radial-gradient(circle at top, #1f2a3a 0%, #121a24 38%, #0d131b 100%);min-width:0;overflow:hidden;border-left:1px solid rgba(148,163,184,.18)}
+#c3d{width:100%;height:100%;display:block;background:transparent}
+#info{position:absolute;top:10px;right:10px;width:260px;background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:12px;padding:12px;backdrop-filter:blur(12px);max-height:calc(100vh - 20px);overflow-y:auto;font-size:11px;color:var(--txt);box-shadow:var(--shadow)}
+#info::-webkit-scrollbar{width:4px}
+#info::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:2px}
+.ib{margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid rgba(208,213,221,.4)}
+.ib:last-child{border-bottom:none;margin-bottom:0}
+.ib h4{font-size:10px;color:#2563eb;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.iv{font-family:Consolas,'Courier New',monospace;color:#334155;line-height:1.7}
+.iv .v{color:#b45309}
+.ib table{border-collapse:collapse;width:100%}
+.ib td{padding:1px 3px;text-align:right;font-size:10px}
+#legend{position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:10px;padding:9px 14px;font-size:10px;color:var(--txt)}
+.li{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.li:last-child{margin-bottom:0}
+.lc{width:20px;height:4px;border-radius:2px}
+#status{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.85);border-radius:7px;padding:5px 12px;font-size:10px;color:var(--dim)}
+.abadge{position:absolute;background:rgba(255,255,255,.95);border-radius:5px;padding:3px 8px;font-size:10px;font-family:Consolas,monospace;pointer-events:none;white-space:nowrap;border:1px solid;color:var(--txt)}
+#seqBar{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);border:1px solid var(--accent);border-radius:12px;padding:12px 22px;font-size:12px;display:none;text-align:center;min-width:330px;box-shadow:0 4px 20px rgba(59,130,246,.15);color:var(--txt)}
+#seqBar .phase{color:#2563eb;font-weight:700;margin-bottom:4px;font-size:13px}
+#seqBar .prog{width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+#seqBar .prog .fill{height:100%;background:linear-gradient(90deg,var(--accent),#60a5fa);border-radius:3px;transition:width .06s}
+#exportOverlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:9999}
+#exportBox{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 32px;text-align:center}
+#formulaModal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:9998}
+#formulaBox{background:#f8fafc;border:1px solid var(--border);border-radius:14px;padding:24px;max-width:700px;max-height:80vh;overflow-y:auto;width:90%}
+#formulaBox pre{font-family:Consolas,monospace;font-size:11px;color:#334155;line-height:1.6;white-space:pre-wrap;background:#f1f5f9;padding:16px;border-radius:8px;border:1px solid var(--border)}
+#formulaBox h2{font-size:16px;color:#2563eb;margin-bottom:12px}
+.joint-actions-outer{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;margin-bottom:10px}
+@media (max-width: 1100px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100vh;flex-direction:column}
+  #panel{width:100%;min-width:0;max-width:none;border-right:none;border-bottom:1px solid var(--border);padding-bottom:18px}
+  #viewport{height:62vh;min-height:420px;border-left:none;border-top:1px solid rgba(148,163,184,.18)}
+}
+@media (max-width: 640px){
+  :root{--panel-w: 100%}
+  #panel{padding:10px 8px 18px}
+  .sec{border-radius:12px;padding:10px 10px 8px}
+  .btn{padding:7px 10px;font-size:10px}
+  .row label{min-width:44px}
+  .vr input,.row input[type=number],.jinputs input,.link-grid input,.link-grid select{font-size:10px}
+  #info{right:8px;left:8px;width:auto}
+  #legend{left:8px;bottom:8px}
+  #status{right:8px;bottom:8px}
+  #seqBar{min-width:280px;width:calc(100% - 24px)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="panel">
+
+<div class="sec">
+<h3 onclick="toggleFold(this)">🔄 旋转顺序 <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<select id="selOrder" onchange="onOrder()">
+<option value="ZYZ" selected>Z → Y → Z（默认）</option>
+<option value="XZY">X → Z → Y</option>
+<option value="XYZ">X → Y → Z</option>
+<option value="YXZ">Y → X → Z</option>
+<option value="YZX">Y → Z → X</option>
+<option value="ZXY">Z → X → Y</option>
+<option value="ZYX">Z → Y → X</option>
+</select>
+<div id="orderTip" style="font-size:10px;color:var(--dim)">关节1绕Z · 关节2绕Y · 关节3绕Z</div>
+</div>
+</div>
+
+<div class="sec">
+<h3 onclick="toggleFold(this)">📐 关节角度（可拖拽） <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<div class="ut">
+<div class="ub on" id="jDeg" onclick="setJU('deg')">度数 °</div>
+<div class="ub" id="jRad" onclick="setJU('rad')">弧度 rad</div>
+</div>
+<div class="note hi" style="margin-bottom:8px">🟢头=起始 · 🟠尾=目标 · ⚪滑块=当前<br>拖拽标记/滑块调角度 · 🔓锁定冻结 · →/←反向</div>
+<div class="note" style="margin-bottom:6px">归零/随机均重置头尾为默认 ±180°</div>
+<div id="jointsContainer"></div>
+</div>
+<div class="joint-actions-outer">
+<button class="btn bw" onclick="zeroPose()">⊙ 姿态归零</button>
+<button class="btn bv" onclick="randomPose()">🎲 随机姿态</button>
+</div>
+</div>
+
+<div class="sec">
+<h3 onclick="toggleFold(this)">🔗 连杆参数（三段拼接） <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<div class="note hi" style="margin-bottom:8px">投影可负=反向 · 顺序(1=X,2=Y,3=Z)</div>
+<div class="st">杆 1（关节1→关节2）</div>
+<div class="chk"><input type="checkbox" id="ckLink1" checked onchange="refresh()"><label for="ckLink1">显示杆1</label></div>
+<div class="link-grid">
+<span class="lh"></span><span class="lh ax">X</span><span class="lh ay">Y</span><span class="lh az">Z</span><span class="lh">顺序</span>
+<span style="font-size:10px;color:#94a3b8">投影</span>
+<input type="number" id="d1x" value="0.6" step="0.05" min="-3" max="3" onchange="linkChanged()">
+<input type="number" id="d1y" value="0.1" step="0.05" min="-3" max="3" onchange="linkChanged()">
+<input type="number" id="d1z" value="0.1" step="0.05" min="-3" max="3" onchange="linkChanged()">
+<select id="ord1" onchange="linkChanged()" style="width:58px;padding:3px">
+<option value="123" selected>123</option><option value="132">132</option>
+<option value="213">213</option><option value="231">231</option>
+<option value="312">312</option><option value="321">321</option>
+</select>
+</div>
+<div class="sep"></div>
+<div class="st">杆 2（关节2→关节3）</div>
+<div class="chk"><input type="checkbox" id="ckLink2" checked onchange="refresh()"><label for="ckLink2">显示杆2</label></div>
+<div class="link-grid">
+<span class="lh"></span><span class="lh ax">X</span><span class="lh ay">Y</span><span class="lh az">Z</span><span class="lh">顺序</span>
+<span style="font-size:10px;color:#94a3b8">投影</span>
+<input type="number" id="d2x" value="0.45" step="0.05" min="-3" max="3" onchange="linkChanged()">
+<input type="number" id="d2y" value="0.08" step="0.05" min="-3" max="3" onchange="linkChanged()">
+<input type="number" id="d2z" value="0.08" step="0.05" min="-3" max="3" onchange="linkChanged()">
+<select id="ord2" onchange="linkChanged()" style="width:58px;padding:3px">
+<option value="123" selected>123</option><option value="132">132</option>
+<option value="213">213</option><option value="231">231</option>
+<option value="312">312</option><option value="321">321</option>
+</select>
+</div>
+</div>
+</div>
+
+<div class="sec">
+<h3 onclick="toggleFold(this)">🎯 末端执行器（长方体+圆锥） <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<div class="chk"><input type="checkbox" id="ckEffector" checked onchange="refresh()"><label for="ckEffector">显示末端执行器</label></div>
+<div class="row"><label>偏移量</label><input type="range" id="rOff" min="-3" max="3" step="0.01" value="0.3" oninput="sp()"><input type="number" id="nOff" min="-3" max="3" step="0.01" value="0.3" onchange="sn()"></div>
+<div class="note">⚠ 正值正向，负值反向</div>
+<div class="st" style="margin-top:10px">初始空间矢量（方向）</div>
+<div class="mode-tab">
+<div class="mt on" id="mtE" onclick="setToolMode('euler')">欧拉角</div>
+<div class="mt" id="mtP" onclick="setToolMode('pos')">三维位置</div>
+</div>
+<div class="tab-body on" id="tabE">
+<div class="ut">
+<div class="ub on" id="tDeg" onclick="setTU('deg')">度数 °</div>
+<div class="ub" id="tRad" onclick="setTU('rad')">弧度 rad</div>
+</div>
+<div class="vr"><span class="ax">α:</span><input type="number" id="eA" value="0" step="1" onchange="eulerChanged()"><span id="tU0" style="font-size:10px;color:var(--dim)">°</span></div>
+<div class="vr"><span class="ay">β:</span><input type="number" id="eB" value="0" step="1" onchange="eulerChanged()"><span id="tU1" style="font-size:10px;color:var(--dim)">°</span></div>
+<div class="vr"><span class="az">γ:</span><input type="number" id="eG" value="0" step="1" onchange="eulerChanged()"><span id="tU2" style="font-size:10px;color:var(--dim)">°</span></div>
+<div class="note">方向=Rz(γ)·Ry(β)·Rx(α)·[0,0,1] · γ控制滚转</div>
+</div>
+<div class="tab-body" id="tabP">
+<div class="vr"><span class="ax">X:</span><input type="number" id="pX" value="0" step="0.01" onchange="posChanged('x')"><span id="autoX" style="font-size:9px;color:var(--amber);display:none">⟳auto</span></div>
+<div class="vr"><span class="ay">Y:</span><input type="number" id="pY" value="0" step="0.01" onchange="posChanged('y')"><span id="autoY" style="font-size:9px;color:var(--amber);display:none">⟳auto</span></div>
+<div class="vr"><span class="az">Z:</span><input type="number" id="pZ" value="0.3" step="0.01" onchange="posChanged('z')"><span id="autoZ" style="font-size:9px;color:var(--amber);display:none">⟳auto</span></div>
+<div class="note">约束:x²+y²+z²=偏移量²</div>
+</div>
+</div>
+</div>
+
+<!-- ★ 优化1: IK板块增加清除轨迹按钮 -->
+<div class="sec">
+<h3 onclick="toggleFold(this)">🧮 逆运动学 (IK) <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<div class="mode-tab">
+<div class="mt on" id="ikPosTab" onclick="setIKMode('pos')">📍 位置目标</div>
+<div class="mt" id="ikOriTab" onclick="setIKMode('ori')">🔄 姿态目标</div>
+</div>
+<div id="ikPosPanel">
+<div class="note hi" style="margin-bottom:6px">末端执行器三维空间位置（修改后实时更新）</div>
+<div class="row"><label>目标X</label><input type="number" id="ikX" value="0" step="0.05" style="width:72px" oninput="ikInputChanged()"></div>
+<div class="row"><label>目标Y</label><input type="number" id="ikY" value="0" step="0.05" style="width:72px" oninput="ikInputChanged()"></div>
+<div class="row"><label>目标Z</label><input type="number" id="ikZ" value="0" step="0.05" style="width:72px" oninput="ikInputChanged()"></div>
+<div class="btns" style="margin-top:6px">
+<button class="btn bs" onclick="grabCurrentEE()">📌 抓取当前末端</button>
+</div>
+<div class="note" style="margin-top:3px">📌 抓取=读取当前末端实际位置填入目标</div>
+</div>
+<div id="ikOriPanel" style="display:none">
+<div class="note hi" style="margin-bottom:6px">目标姿态 R=Rz(γ)·Ry(β)·Rx(α)（修改后实时更新）</div>
+<div class="vr"><span class="ax">α:</span><input type="number" id="ikOA" value="0" step="1" oninput="ikOriInputChanged()"><span style="font-size:10px;color:var(--dim)">°</span></div>
+<div class="vr"><span class="ay">β:</span><input type="number" id="ikOB" value="0" step="1" oninput="ikOriInputChanged()"><span style="font-size:10px;color:var(--dim)">°</span></div>
+<div class="vr"><span class="az">γ:</span><input type="number" id="ikOG" value="0" step="1" oninput="ikOriInputChanged()"><span style="font-size:10px;color:var(--dim)">°</span></div>
+<div class="btns" style="margin-top:6px">
+<button class="btn bw" onclick="extractMechanismOri()" title="提取去除执行器后的机构R03欧拉角">🔧 机构姿态</button>
+<button class="btn bv" onclick="extractEffectorOri()" title="提取末端执行器当前姿态（含工具方向）">🎯 执行器姿态</button>
+</div>
+<div class="note" style="margin-top:4px">🔧机构姿态=R03欧拉角（关节链末端）<br>🎯执行器姿态=含工具偏移方向的完整姿态</div>
+</div>
+<div class="chk" style="margin-top:6px"><input type="checkbox" id="ckIKArrow" checked onchange="refresh()"><label for="ckIKArrow">显示IK目标标记/箭头</label></div>
+<div class="btns">
+<button class="btn bp" onclick="solveIK()">🔍 求解IK</button>
+<button class="btn bv" onclick="playIK()">▶ IK动画</button>
+<button class="btn br" onclick="clearTrail()">🗑 清除轨迹</button>
+</div>
+<div id="ikRes" style="font-size:11px;color:#b45309;margin-top:7px;min-height:18px;line-height:1.5"></div>
+</div>
+</div>
+
+<div class="sec">
+<h3 onclick="toggleFold(this)">🎬 顺序动画控制 <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<div class="note hi" style="margin-bottom:8px">严格按旋转次序逐轴执行，每次只动一根轴</div>
+<div class="btns">
+<button class="btn bs" onclick="playFK()">▶ 正运动(FK)</button>
+<button class="btn bw" onclick="stopSeq()">⏹ 停止</button>
+<button class="btn br" onclick="resetAll()">⟲ 重置</button>
+<button class="btn br" onclick="clearTrail()">🗑 清除轨迹</button>
+</div>
+<div class="chk" style="margin-top:8px"><input type="checkbox" id="ckLoop" onchange="Seq.loop=this.checked"><label for="ckLoop">🔁 循环播放</label></div>
+<div class="row" style="margin-top:6px"><label>速度</label><input type="range" id="seqSpd" min="0.2" max="2" step="0.1" value="0.6"></div>
+</div>
+</div>
+
+<div class="sec">
+<h3 onclick="toggleFold(this)">📤 导出 / 📥 导入 <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<div class="btns">
+<button class="btn br" onclick="exportAnim()">📹 录制视频</button>
+<button class="btn bp" onclick="exportFormulas()">📄 导出公式文档</button>
+<button class="btn bs" onclick="document.getElementById('importFileInput').click()">📥 导入公式文档</button>
+</div>
+<input type="file" id="importFileInput" accept=".txt" style="display:none" onchange="importFormulaFile(this)">
+<div class="row" style="margin-top:8px"><label>帧率</label>
+<select id="recFps" style="width:100px;margin-bottom:0">
+<option value="36" selected>36 fps</option>
+<option value="60">60 fps</option>
+</select>
+</div>
+<div class="note" id="exportNote"></div>
+</div>
+</div>
+
+<!-- ★ 优化2: 相机默认位置改为 (-5, 7.5, -5) -->
+<div class="sec">
+<h3 onclick="toggleFold(this)">👁 显示选项 <span class="fold-arrow">▼</span></h3>
+<div class="sec-body">
+<div class="st">📷 相机位置（指向原点）</div>
+<div class="vr"><span class="ax">X:</span><input type="number" id="camX" value="-5" step="0.5" onchange="applyCamPos()"></div>
+<div class="vr"><span class="ay">Y:</span><input type="number" id="camY" value="7.5" step="0.5" onchange="applyCamPos()"></div>
+<div class="vr"><span class="az">Z:</span><input type="number" id="camZ" value="-5" step="0.5" onchange="applyCamPos()"></div>
+<div class="btns" style="margin-top:4px;margin-bottom:8px">
+<button class="btn bp" onclick="resetCamIso()">⊙ 等轴测默认</button>
+</div>
+<div class="note">修改后相机始终看向原点(0,0,0)<br>等轴测默认: (-5, 7.5, -5)</div>
+<div class="sep"></div>
+<div class="chk"><input type="checkbox" id="ckGrid" checked onchange="toggleVis()"><label for="ckGrid">网格</label></div>
+<div class="chk"><input type="checkbox" id="ckAxes" checked onchange="toggleVis()"><label for="ckAxes">坐标轴</label></div>
+<div class="row"><label>轴粗细</label><input type="range" id="axThick" min="0.004" max="0.02" step="0.002" value="0.006" oninput="rebuildAxes()"></div>
+<div class="chk"><input type="checkbox" id="ckAngles" checked onchange="refresh()"><label for="ckAngles">角度标注</label></div>
+<div class="chk"><input type="checkbox" id="ckTrail" checked onchange="refresh()"><label for="ckTrail">末端轨迹</label><input type="color" id="trailClr" value="#b45309" style="margin-left:8px" onchange="refresh()"></div>
+<div class="chk"><input type="checkbox" id="ckRotAx" checked onchange="refresh()"><label for="ckRotAx">旋转轴箭头</label></div>
+<div class="row" style="margin-top:8px"><label>背景色</label><input type="color" id="bgClr" value="#f0f2f5" onchange="changeBg()"></div>
+</div>
+</div>
+
+</div>
+
+<div id="viewport">
+<canvas id="c3d"></canvas>
+<div id="seqBar">
+<div class="phase" id="seqPhase">Phase 1/3</div>
+<div style="font-size:11px;color:#64748b" id="seqAngle"></div>
+<div class="prog"><div class="fill" id="seqFill" style="width:0%"></div></div>
+</div>
+<div id="info">
+<div class="ib"><h4>📍 末端位置</h4><div class="iv" id="iPos"></div></div>
+<div class="ib"><h4>🔄 欧拉角</h4><div class="iv" id="iEul"></div></div>
+<div class="ib"><h4>🔮 四元数</h4><div class="iv" id="iQuat"></div></div>
+<div class="ib"><h4>📐 齐次变换 4×4</h4><div class="iv" id="iMat"></div></div>
+<div class="ib"><h4>🔗 旋转顺序</h4><div class="iv" id="iOrd"></div></div>
+</div>
+<div id="legend">
+<div class="li"><div class="lc" style="background:var(--red)"></div><span>X轴/X投影段</span></div>
+<div class="li"><div class="lc" style="background:var(--green)"></div><span>Y轴/Y投影段</span></div>
+<div class="li"><div class="lc" style="background:var(--blue)"></div><span>Z轴/Z投影段</span></div>
+<div class="li"><div class="lc" style="background:var(--amber)"></div><span>末端执行器</span></div>
+<div class="li"><div class="lc" style="background:#a855f7"></div><span>IK目标</span></div>
+</div>
+<div id="status"><span id="fps">FPS: --</span> | 左键旋转 · 右键平移 · 滚轮缩放</div>
+</div>
+</div>
+
+<div id="exportOverlay"><div id="exportBox">
+<div style="font-size:14px;font-weight:700;color:#2563eb">📹 正在录制...</div>
+<div style="font-size:11px;color:var(--dim);margin-top:6px" id="exportInfo">录制中</div>
+</div></div>
+
+<div id="formulaModal"><div id="formulaBox">
+<h2>📋 机构运动学公式</h2>
+<pre id="formulaContent"></pre>
+<div class="btns" style="margin-top:12px">
+<button class="btn bp" onclick="downloadFormula()">💾 下载TXT</button>
+<button class="btn bw" onclick="document.getElementById('formulaModal').style.display='none'">关闭</button>
+</div>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const S={
+  order:'ZYZ',
+  link1:{dx:.6,dy:.1,dz:.1,order:'123'},
+  link2:{dx:.45,dy:.08,dz:.08,order:'123'},
+  off:.3,angles:[0,0,0],jUnit:'deg',
+  toolMode:'euler',tUnit:'deg',
+  toolEuler:{a:0,b:0,g:0},toolPos:{x:0,y:0,z:.3},
+  trail:[],ikResult:null,ikTarget:[0,0,0],
+  ikMode:'pos',ikTargetR:null,exporting:false,grabbed:false
+};
+const J=[
+  {head:-180,tail:180,locked:false,rev:false},
+  {head:-180,tail:180,locked:false,rev:false},
+  {head:-180,tail:180,locked:false,rev:false}
+];
+const Seq={active:false,phase:0,t:0,pause:0,from:[0,0,0],to:[0,0,0],loop:false};
+const AC={X:0xef4444,Y:0x22c55e,Z:0x3b82f6};
+const ACC={X:'#ef4444',Y:'#22c55e',Z:'#3b82f6'};
+const SEGC=[0xef4444,0x22c55e,0x3b82f6];
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function clamp01(t){return Math.max(0,Math.min(1,t))}
+function easeIO(t){return t<.5?2*t*t:-1+(4-2*t)*t}
+function pct(a){return((a+180)/360)*100}
+function clampAng(a){return Math.max(-180,Math.min(180,a))}
+function fmtA(a){return S.jUnit==='deg'?a.toFixed(1)+'°':(a*D2R).toFixed(3)+'rad'}
+
+function rX(t){const c=Math.cos(t),s=Math.sin(t);return[[1,0,0],[0,c,-s],[0,s,c]]}
+function rY(t){const c=Math.cos(t),s=Math.sin(t);return[[c,0,s],[0,1,0],[-s,0,c]]}
+function rZ(t){const c=Math.cos(t),s=Math.sin(t);return[[c,-s,0],[s,c,0],[0,0,1]]}
+function m3(A,B){const R=[[0,0,0],[0,0,0],[0,0,0]];for(let i=0;i<3;i++)for(let j=0;j<3;j++)for(let k=0;k<3;k++)R[i][j]+=A[i][k]*B[k][j];return R}
+function t3(M){return[[M[0][0],M[1][0],M[2][0]],[M[0][1],M[1][1],M[2][1]],[M[0][2],M[1][2],M[2][2]]]}
+function mv(M,v){return[M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]]}
+function rm(ax,t){return ax==='X'?rX(t):ax==='Y'?rY(t):rZ(t)}
+function n3(v){const l=Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);return l<1e-12?[0,0,1]:[v[0]/l,v[1]/l,v[2]/l]}
+function v3a(a,b){return[a[0]+b[0],a[1]+b[1],a[2]+b[2]]}
+function v3s(a,s){return[a[0]*s,a[1]*s,a[2]*s]}
+function v3l(a){return Math.sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2])}
+function dot3(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function e2d(a,b,g){const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cg=Math.cos(g),sg=Math.sin(g);return[ca*sb*cg+sa*sg,ca*sb*sg-sa*cg,ca*cb]}
+function d2e(d){const dn=n3(d);const a=-Math.asin(Math.max(-1,Math.min(1,-dn[1])));let b=0;if(Math.abs(Math.cos(a))>1e-6)b=Math.atan2(dn[0],dn[2]);return{a,b,g:0}}
+function axVec(a){return a==='X'?[1,0,0]:a==='Y'?[0,1,0]:[0,0,1]}
+
+function rotToErrVec(R){
+  const tr=R[0][0]+R[1][1]+R[2][2];
+  const cosA=Math.max(-1,Math.min(1,(tr-1)/2));
+  const angle=Math.acos(cosA);
+  if(angle<1e-10)return[0,0,0];
+  if(Math.abs(angle-Math.PI)<1e-6){
+    const xx=(R[0][0]+1)/2,yy=(R[1][1]+1)/2,zz=(R[2][2]+1)/2;
+    const xy=(R[0][1]+R[1][0])/4,xz=(R[0][2]+R[2][0])/4,yz=(R[1][2]+R[2][1])/4;
+    let ax;
+    if(xx>yy&&xx>zz){const x=Math.sqrt(Math.max(0,xx));ax=[x,xy/(x||1e-9),xz/(x||1e-9)]}
+    else if(yy>zz){const y=Math.sqrt(Math.max(0,yy));ax=[xy/(y||1e-9),y,yz/(y||1e-9)]}
+    else{const z=Math.sqrt(Math.max(0,zz));ax=[xz/(z||1e-9),yz/(z||1e-9),z]}
+    return[ax[0]*angle,ax[1]*angle,ax[2]*angle];
+  }
+  const s=2*Math.sin(angle);
+  return[(R[2][1]-R[1][2])/s*angle,(R[0][2]-R[2][0])/s*angle,(R[1][0]-R[0][1])/s*angle];
+}
+function extractEuler(R){
+  const b=Math.asin(Math.max(-1,Math.min(1,-R[2][0])));
+  const cb=Math.cos(b);let a=0,g=0;
+  if(Math.abs(cb)>1e-6){a=Math.atan2(R[2][1],R[2][2]);g=Math.atan2(R[1][0],R[0][0])}
+  return{a:a*R2D,b:b*R2D,g:g*R2D};
+}
+
+function solve3x3(A,b){
+  const M=[[A[0][0],A[0][1],A[0][2],b[0]],
+           [A[1][0],A[1][1],A[1][2],b[1]],
+           [A[2][0],A[2][1],A[2][2],b[2]]];
+  for(let col=0;col<3;col++){
+    let mx=Math.abs(M[col][col]),mr=col;
+    for(let r=col+1;r<3;r++)if(Math.abs(M[r][col])>mx){mx=Math.abs(M[r][col]);mr=r}
+    if(mx<1e-12)return null;
+    if(mr!==col)[M[col],M[mr]]=[M[mr],M[col]];
+    for(let r=col+1;r<3;r++){
+      const f=M[r][col]/M[col][col];
+      for(let k=col;k<4;k++)M[r][k]-=f*M[col][k];
+    }
+  }
+  const x=[0,0,0];
+  for(let i=2;i>=0;i--){
+    x[i]=M[i][3];
+    for(let j=i+1;j<3;j++)x[i]-=M[i][j]*x[j];
+    x[i]/=M[i][i];
+  }
+  return x;
+}
+
+function getLinkSegs(link,R){
+  const segs={'1':mv(R,[link.dx,0,0]),'2':mv(R,[0,link.dy,0]),'3':mv(R,[0,0,link.dz])};
+  const o=link.order.split('');
+  return[segs[o[0]],segs[o[1]],segs[o[2]]];
+}
+function fk(angles,order,l1,l2,off,td){
+  const ax=order.split('');
+  const a0=angles[0]*D2R,a1=angles[1]*D2R,a2=angles[2]*D2R;
+  const R1=rm(ax[0],a0),R2=rm(ax[1],a1),R3=rm(ax[2],a2);
+  const R01=R1,R02=m3(R01,R2),R03=m3(R02,R3);
+  const P1=[0,0,0];
+  const s1=getLinkSegs(l1,R01);
+  const L1A=v3a(P1,s1[0]),L1B=v3a(L1A,s1[1]),P2=v3a(L1B,s1[2]);
+  const s2=getLinkSegs(l2,R02);
+  const L2A=v3a(P2,s2[0]),L2B=v3a(L2A,s2[1]),P3=v3a(L2B,s2[2]);
+  const tdn=n3(td),v3=mv(R03,tdn),PE=v3a(P3,v3s(v3,off));
+  return{joints:[P1,P2,P3],end:PE,rot:R03,t:{R01,R02,R03},
+    link1Segs:[[P1,L1A],[L1A,L1B],[L1B,P2]],link2Segs:[[P2,L2A],[L2A,L2B],[L2B,P3]],
+    link1Ord:l1.order,link2Ord:l2.order};
+}
+function getToolDir(){const e=S.toolEuler;return e2d(e.a*D2R,e.b*D2R,e.g*D2R)}
+
+function ikPosition(target,order,l1,l2,off,td){
+  let ang=[0,0,0];
+  for(let it=0;it<300;it++){
+    const f=fk(ang,order,l1,l2,off,td);
+    const e=[target[0]-f.end[0],target[1]-f.end[1],target[2]-f.end[2]];
+    const err=v3l(e);
+    if(err<1e-9)break;
+    const h=0.01;
+    const cols=[];
+    for(let j=0;j<3;j++){
+      const ap=[...ang];ap[j]+=h;
+      const fp=fk(ap,order,l1,l2,off,td);
+      cols.push([(fp.end[0]-f.end[0])/h,(fp.end[1]-f.end[1])/h,(fp.end[2]-f.end[2])/h]);
+    }
+    const Jm=[[cols[0][0],cols[1][0],cols[2][0]],
+              [cols[0][1],cols[1][1],cols[2][1]],
+              [cols[0][2],cols[1][2],cols[2][2]]];
+    const dTh=solve3x3(Jm,e);
+    if(!dTh){
+      for(let j=0;j<3;j++)ang[j]+=0.5*dot3(cols[j],e);
+    }else{
+      const stepLen=v3l(dTh);
+      const sc=stepLen>30?30/stepLen:1;
+      for(let j=0;j<3;j++)ang[j]+=dTh[j]*sc;
+    }
+    ang=ang.map(a=>clampAng(a));
+  }
+  return ang;
+}
+
+function ikOrientation(targetR,order,l1,l2,off,td){
+  let ang=[0,0,0];
+  const ax=order.split('');
+  for(let it=0;it<500;it++){
+    const a0=ang[0]*D2R,a1=ang[1]*D2R,a2=ang[2]*D2R;
+    const R1=rm(ax[0],a0),R2=rm(ax[1],a1),R3=rm(ax[2],a2);
+    const R01=R1,R02=m3(R01,R2),R03=m3(R02,R3);
+    const Rerr=m3(targetR,t3(R03));
+    const ev=rotToErrVec(Rerr);
+    const el=v3l(ev);
+    if(el<1e-9)break;
+    const w0=axVec(ax[0]);
+    const w1=mv(R01,axVec(ax[1]));
+    const w2=mv(R02,axVec(ax[2]));
+    const Jm=[[w0[0],w1[0],w2[0]],
+              [w0[1],w1[1],w2[1]],
+              [w0[2],w1[2],w2[2]]];
+    const dTh=solve3x3(Jm,ev);
+    if(dTh){
+      const stepLen=v3l(dTh);
+      const maxStep=2*D2R;
+      const sc=stepLen>maxStep?maxStep/stepLen:1;
+      ang[0]+=dTh[0]*sc*R2D;
+      ang[1]+=dTh[1]*sc*R2D;
+      ang[2]+=dTh[2]*sc*R2D;
+    }else{
+      const step=Math.min(2.0,0.3/(el+1e-9));
+      ang[0]+=step*dot3(w0,ev)*R2D;
+      ang[1]+=step*dot3(w1,ev)*R2D;
+      ang[2]+=step*dot3(w2,ev)*R2D;
+    }
+    ang=ang.map(a=>clampAng(a));
+  }
+  return ang;
+}
+
+function autoAdjust(target){
+  const v1l=v3l([S.link1.dx,S.link1.dy,S.link1.dz]);
+  const v2l=v3l([S.link2.dx,S.link2.dy,S.link2.dz]);
+  const dist=v3l(target),maxR=v1l+v2l+Math.abs(S.off);
+  if(dist>maxR){const need=dist-v1l-v2l;
+    if(need>0&&need<=3){S.off=Math.sign(S.off||1)*Math.ceil(Math.abs(need)*100)/100;
+      document.getElementById('rOff').value=S.off;document.getElementById('nOff').value=S.off;return true;}}
+  return false;
+}
+
+let scene,cam,ren,ctrl,armGrp,trailLine,ikMarker,oriTriad,miniSc,miniCam;
+let gridHelper,axesGroup;let badges=[];
+
+function createThickAxes(len,radius){
+  const grp=new THREE.Group();
+  [{dir:[1,0,0],color:0xef4444},{dir:[0,1,0],color:0x22c55e},{dir:[0,0,1],color:0x3b82f6}].forEach(a=>{
+    const geo=new THREE.CylinderGeometry(radius,radius,len,8);
+    const mat=new THREE.MeshPhongMaterial({color:a.color,emissive:new THREE.Color(a.color).multiplyScalar(0.15)});
+    const mesh=new THREE.Mesh(geo,mat);
+    const dir=new THREE.Vector3(...a.dir);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    mesh.position.copy(dir.clone().multiplyScalar(len/2));grp.add(mesh);
+    const coneGeo=new THREE.ConeGeometry(radius*3,radius*8,8);
+    const cone=new THREE.Mesh(coneGeo,new THREE.MeshPhongMaterial({color:a.color}));
+    cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    cone.position.copy(dir.clone().multiplyScalar(len+radius*4));grp.add(cone);
+  });
+  return grp;
+}
+function rebuildAxes(){
+  if(axesGroup){scene.remove(axesGroup);axesGroup.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();});}
+  const thick=parseFloat(document.getElementById('axThick').value)||0.006;
+  axesGroup=createThickAxes(2,thick);
+  axesGroup.visible=document.getElementById('ckAxes').checked;
+  scene.add(axesGroup);
+}
+
+/* ★ 优化2: 相机默认位置 (-5, 7.5, -5) */
+function applyCamPos(){
+  const x=parseFloat(document.getElementById('camX').value)||0;
+  const y=parseFloat(document.getElementById('camY').value)||0;
+  const z=parseFloat(document.getElementById('camZ').value)||0;
+  cam.position.set(x,y,z);
+  ctrl.target.set(0,0,0);
+  ctrl.update();
+}
+function resetCamIso(){
+  document.getElementById('camX').value=-5;
+  document.getElementById('camY').value=7.5;
+  document.getElementById('camZ').value=-5;
+  applyCamPos();
+}
+
+function init(){
+  const vp=document.getElementById('viewport'),cv=document.getElementById('c3d');
+  ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  ren.setSize(vp.clientWidth,vp.clientHeight);
+  ren.setPixelRatio(Math.min(devicePixelRatio,2));
+  ren.shadowMap.enabled=true;ren.autoClear=false;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0xf0f2f5);
+  cam=new THREE.PerspectiveCamera(50,vp.clientWidth/vp.clientHeight,.1,100);
+  /* ★ 优化2: 初始化相机位置 (-5, 7.5, -5) */
+  cam.position.set(-5,7.5,-5);
+  ctrl=new THREE.OrbitControls(cam,cv);
+  ctrl.enableDamping=true;ctrl.dampingFactor=.08;
+  ctrl.target.set(0,0,0);
+  ctrl.minDistance=1;ctrl.maxDistance=30;
+  scene.add(new THREE.AmbientLight(0xffffff,.7));
+  const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(5,8,5);dl.castShadow=true;scene.add(dl);
+  scene.add(new THREE.DirectionalLight(0x8899bb,.3)).position.set(-3,4,-3);
+  scene.add(new THREE.PointLight(0x3b82f6,.3,10));
+  gridHelper=new THREE.GridHelper(10,20,0xcbd5e1,0xe2e8f0);scene.add(gridHelper);
+  axesGroup=createThickAxes(2,0.006);scene.add(axesGroup);
+  armGrp=new THREE.Group();scene.add(armGrp);
+  trailLine=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xb45309,transparent:true,opacity:.7}));
+  trailLine.visible=true;scene.add(trailLine);
+  ikMarker=new THREE.Group();
+  ikMarker.add(new THREE.Mesh(new THREE.SphereGeometry(.035,16,16),new THREE.MeshPhongMaterial({color:0xa855f7,emissive:0x7c3aed,transparent:true,opacity:.9})));
+  const cm=new THREE.LineBasicMaterial({color:0xa855f7,transparent:true,opacity:.6});
+  [[.15,0,0],[-.15,0,0],[0,.15,0],[0,-.15,0],[0,0,.15],[0,0,-.15]].forEach(d=>{
+    ikMarker.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(...d)]),cm));});
+  scene.add(ikMarker);
+  oriTriad=new THREE.Group();scene.add(oriTriad);
+  miniSc=new THREE.Scene();miniCam=new THREE.PerspectiveCamera(50,1,.1,10);miniCam.position.set(0,0,3);
+  miniSc.add(new THREE.AxesHelper(1.2));miniSc.add(new THREE.AmbientLight(0xffffff,1));
+  window.addEventListener('resize',onRsz);
+  animate();
+}
+function onRsz(){const vp=document.getElementById('viewport');cam.aspect=vp.clientWidth/vp.clientHeight;cam.updateProjectionMatrix();ren.setSize(vp.clientWidth,vp.clientHeight)}
+function toggleVis(){
+  gridHelper.visible=document.getElementById('ckGrid').checked;
+  axesGroup.visible=document.getElementById('ckAxes').checked;
+  refresh();
+}
+function clearTrail(){
+  S.trail=[];
+  trailLine.geometry.dispose();
+  trailLine.geometry=new THREE.BufferGeometry();
+  refresh();
+}
+
+function toggleFold(h3){
+  const body=h3.nextElementSibling;
+  const arrow=h3.querySelector('.fold-arrow');
+  if(body.classList.contains('collapsed')){
+    body.classList.remove('collapsed');
+    body.style.maxHeight=body.scrollHeight+'px';
+    arrow.classList.remove('collapsed');
+    setTimeout(()=>{body.style.maxHeight='';},320);
+  }else{
+    body.style.maxHeight=body.scrollHeight+'px';
+    requestAnimationFrame(()=>{
+      body.classList.add('collapsed');
+      arrow.classList.add('collapsed');
+    });
+  }
+}
+
+function buildArm(){
+  while(armGrp.children.length){const c=armGrp.children[0];armGrp.remove(c);
+    if(c.geometry)c.geometry.dispose();
+    if(c.material){Array.isArray(c.material)?c.material.forEach(m=>m.dispose()):c.material.dispose()}}
+  badges.forEach(b=>b.parentNode&&b.parentNode.removeChild(b));badges=[];
+  const td=getToolDir();
+  const f=fk(S.angles,S.order,S.link1,S.link2,S.off,td);
+  const ax=S.order.split('');
+
+  function drawLink(segs,ordStr,radius,visible){
+    if(!visible)return;const ord=ordStr.split('');
+    segs.forEach((seg,i)=>{
+      const s=new THREE.Vector3(...seg[0]),e=new THREE.Vector3(...seg[1]);
+      const dir=new THREE.Vector3().subVectors(e,s),len=dir.length();
+      if(len<.001)return;
+      const ai=parseInt(ord[i])-1;
+      const g=new THREE.CylinderGeometry(radius,radius+.006,len,12);
+      const c1=new THREE.Color(SEGC[ai]),c2=c1.clone().lerp(new THREE.Color(0xffffff),.3);
+      const cols=[],pa=g.attributes.position;
+      for(let j=0;j<pa.count;j++){const t=pa.getY(j)/len+.5,cc=c1.clone().lerp(c2,t);cols.push(cc.r,cc.g,cc.b)}
+      g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+      const mesh=new THREE.Mesh(g,new THREE.MeshPhongMaterial({vertexColors:true,shininess:60,emissive:c1.clone().multiplyScalar(.05)}));
+      mesh.castShadow=true;mesh.position.addVectors(s,e).multiplyScalar(.5);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().normalize());
+      armGrp.add(mesh);
+      if(i<2){const jb=new THREE.Mesh(new THREE.SphereGeometry(radius+.004,8,8),new THREE.MeshPhongMaterial({color:SEGC[parseInt(ord[i+1])-1],emissive:0x111111}));jb.position.copy(e);armGrp.add(jb)}
+    });
+  }
+  drawLink(f.link1Segs,f.link1Ord,.03,document.getElementById('ckLink1').checked);
+  drawLink(f.link2Segs,f.link2Ord,.026,document.getElementById('ckLink2').checked);
+
+  const jPts=f.joints;
+  for(let i=0;i<3;i++){
+    const isActive=Seq.active&&Seq.phase===i;
+    const m=new THREE.Mesh(new THREE.SphereGeometry(isActive?.07:.048,20,20),
+      new THREE.MeshPhongMaterial({color:isActive?0x60a5fa:0x94a3b8,emissive:isActive?0x3b82f6:0x222222,shininess:80}));
+    m.position.set(...jPts[i]);m.castShadow=true;armGrp.add(m);
+  }
+
+  const showEffector=document.getElementById('ckEffector').checked;
+  const p3v=new THREE.Vector3(...f.joints[2]),endV=new THREE.Vector3(...f.end);
+  if(showEffector){
+    const tdir=new THREE.Vector3().subVectors(endV,p3v),tlen=tdir.length();
+    if(tlen>.001){
+      const rod=new THREE.Mesh(new THREE.CylinderGeometry(.01,.01,tlen,8),new THREE.MeshPhongMaterial({color:0xf59e0b,emissive:0x5a3500}));
+      rod.position.addVectors(p3v,endV).multiplyScalar(.5);
+      rod.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),tdir.clone().normalize());
+      rod.castShadow=true;armGrp.add(rod);
+    }
+    const effGrp=new THREE.Group();
+    const boxMats=[
+      new THREE.MeshPhongMaterial({color:0xef4444}),new THREE.MeshPhongMaterial({color:0xb91c1c}),
+      new THREE.MeshPhongMaterial({color:0x22c55e}),new THREE.MeshPhongMaterial({color:0x15803d}),
+      new THREE.MeshPhongMaterial({color:0x3b82f6}),new THREE.MeshPhongMaterial({color:0x1d4ed8})];
+    const box=new THREE.Mesh(new THREE.BoxGeometry(.07,.05,.04),boxMats);box.castShadow=true;effGrp.add(box);
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(.022,.06,8),new THREE.MeshPhongMaterial({color:0xf59e0b,emissive:0x7a4d05}));
+    cone.position.y=.055;cone.castShadow=true;effGrp.add(cone);
+    const mark=new THREE.Mesh(new THREE.CylinderGeometry(.004,.004,.08,6),new THREE.MeshPhongMaterial({color:0x333333,emissive:0x444444}));
+    mark.position.set(.045,0,0);mark.rotation.z=Math.PI/2;effGrp.add(mark);
+    effGrp.position.copy(endV);
+    const wtd=n3(mv(f.rot,td));
+    const upQ=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(...wtd));
+    const gQ=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...wtd),S.toolEuler.g*D2R);
+    effGrp.quaternion.copy(gQ).multiply(upQ);
+    armGrp.add(effGrp);
+  }
+
+  if(document.getElementById('ckRotAx').checked){
+    for(let i=0;i<3;i++){
+      let R;if(i===0)R=[[1,0,0],[0,1,0],[0,0,1]];else if(i===1)R=f.t.R01;else R=f.t.R02;
+      const wd=n3(mv(R,axVec(ax[i])));
+      armGrp.add(new THREE.ArrowHelper(new THREE.Vector3(...wd),new THREE.Vector3(...jPts[i]),.4,AC[ax[i]],.09,.045));
+    }
+  }
+  if(document.getElementById('ckAngles').checked){
+    for(let i=0;i<3;i++){
+      const d=document.createElement('div');d.className='abadge';
+      d.style.borderColor=ACC[ax[i]];d.style.color=ACC[ax[i]];
+      d.textContent=`θ${i+1}(${ax[i]})=${fmtA(S.angles[i])}`;
+      d.style.left='10px';d.style.top=(55+i*26)+'px';
+      document.getElementById('viewport').appendChild(d);badges.push(d);
+    }
+  }
+
+  const showIK=document.getElementById('ckIKArrow').checked;
+  if(S.grabbed&&showIK){
+    ikMarker.position.set(...S.ikTarget);ikMarker.visible=true;
+    while(oriTriad.children.length){const c=oriTriad.children[0];oriTriad.remove(c);
+      if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+    if(S.ikTargetR){
+      const R=S.ikTargetR;
+      [[R[0][0],R[1][0],R[2][0],0xef4444],[R[0][1],R[1][1],R[2][1],0x22c55e],[R[0][2],R[1][2],R[2][2],0x3b82f6]].forEach(a=>{
+        oriTriad.add(new THREE.ArrowHelper(new THREE.Vector3(a[0],a[1],a[2]),new THREE.Vector3(0,0,0),.35,a[3],.08,.05));});
+      oriTriad.position.copy(endV);oriTriad.visible=true;
+    }
+  }else if(S.ikMode==='pos'){
+    ikMarker.position.set(...S.ikTarget);ikMarker.visible=showIK;
+    oriTriad.visible=false;
+  }else{
+    ikMarker.visible=false;
+    while(oriTriad.children.length){const c=oriTriad.children[0];oriTriad.remove(c);
+      if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+    if(showIK&&S.ikTargetR){
+      const R=S.ikTargetR;
+      [[R[0][0],R[1][0],R[2][0],0xef4444],[R[0][1],R[1][1],R[2][1],0x22c55e],[R[0][2],R[1][2],R[2][2],0x3b82f6]].forEach(a=>{
+        oriTriad.add(new THREE.ArrowHelper(new THREE.Vector3(a[0],a[1],a[2]),new THREE.Vector3(0,0,0),.35,a[3],.08,.05));});
+      oriTriad.position.copy(endV);oriTriad.visible=true;
+    }else oriTriad.visible=false;
+  }
+
+  if(document.getElementById('ckTrail').checked){
+    S.trail.push(f.end.slice());if(S.trail.length>600)S.trail.shift();
+    if(S.trail.length>1){trailLine.geometry.dispose();trailLine.geometry=new THREE.BufferGeometry().setFromPoints(S.trail.map(p=>new THREE.Vector3(...p)))}
+    trailLine.material.color.set(document.getElementById('trailClr').value);trailLine.visible=true;
+  }else{trailLine.visible=false;S.trail=[]}
+}
+
+function ikInputChanged(){
+  const tx=parseFloat(document.getElementById('ikX').value)||0;
+  const ty=parseFloat(document.getElementById('ikY').value)||0;
+  const tz=parseFloat(document.getElementById('ikZ').value)||0;
+  S.ikTarget=[tx,ty,tz];ikMarker.position.set(tx,ty,tz);
+}
+function ikOriInputChanged(){
+  const R=getTargetRotMatrix();S.ikTargetR=R;
+  while(oriTriad.children.length){const c=oriTriad.children[0];oriTriad.remove(c);
+    if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+  if(document.getElementById('ckIKArrow').checked&&S.ikMode==='ori'){
+    [[R[0][0],R[1][0],R[2][0],0xef4444],[R[0][1],R[1][1],R[2][1],0x22c55e],[R[0][2],R[1][2],R[2][2],0x3b82f6]].forEach(a=>{
+      oriTriad.add(new THREE.ArrowHelper(new THREE.Vector3(a[0],a[1],a[2]),new THREE.Vector3(0,0,0),.35,a[3],.08,.05));});
+    const td=getToolDir();const f=fk(S.angles,S.order,S.link1,S.link2,S.off,td);
+    oriTriad.position.set(...f.end);oriTriad.visible=true;
+  }
+}
+
+function extractMechanismOri(){
+  const td=getToolDir();
+  const f=fk(S.angles,S.order,S.link1,S.link2,S.off,td);
+  const eu=extractEuler(f.rot);
+  document.getElementById('ikOA').value=eu.a.toFixed(2);
+  document.getElementById('ikOB').value=eu.b.toFixed(2);
+  document.getElementById('ikOG').value=eu.g.toFixed(2);
+  S.ikTargetR=f.rot;
+  S.grabbed=true;
+  ikOriInputChanged();
+  document.getElementById('ikRes').innerHTML='<span style="color:#f59e0b">🔧 已提取机构R03姿态 → α='+eu.a.toFixed(1)+'° β='+eu.b.toFixed(1)+'° γ='+eu.g.toFixed(1)+'°</span>';
+}
+function extractEffectorOri(){
+  const td=getToolDir();
+  const f=fk(S.angles,S.order,S.link1,S.link2,S.off,td);
+  const eu=extractEuler(f.rot);
+  const fullG=eu.g+S.toolEuler.g;
+  document.getElementById('ikOA').value=eu.a.toFixed(2);
+  document.getElementById('ikOB').value=eu.b.toFixed(2);
+  document.getElementById('ikOG').value=fullG.toFixed(2);
+  const fullR=m3(m3(rZ(fullG*D2R),rY(eu.b*D2R)),rX(eu.a*D2R));
+  S.ikTargetR=fullR;
+  S.grabbed=true;
+  ikOriInputChanged();
+  document.getElementById('ikRes').innerHTML='<span style="color:#8b5cf6">🎯 已提取执行器姿态 → α='+eu.a.toFixed(1)+'° β='+eu.b.toFixed(1)+'° γ='+fullG.toFixed(1)+'°</span>';
+}
+
+function grabCurrentEE(){
+  const td=getToolDir();
+  const f=fk(S.angles,S.order,S.link1,S.link2,S.off,td);
+  S.ikTarget=[f.end[0],f.end[1],f.end[2]];
+  document.getElementById('ikX').value=f.end[0].toFixed(3);
+  document.getElementById('ikY').value=f.end[1].toFixed(3);
+  document.getElementById('ikZ').value=f.end[2].toFixed(3);
+  S.grabbed=true;
+  ikMarker.position.set(...S.ikTarget);
+  refresh();
+  document.getElementById('ikRes').innerHTML='<span style="color:#10b981">✓ 已抓取当前末端位置 → X='+f.end[0].toFixed(3)+' Y='+f.end[1].toFixed(3)+' Z='+f.end[2].toFixed(3)+'</span>';
+}
+
+function zeroPose(){
+  S.angles=[0,0,0];
+  J.forEach(j=>{j.head=-180;j.tail=180;j.locked=false;j.rev=false});
+  syncJointInputs();updateJointMarkers();refresh();
+}
+function randomPose(){
+  S.angles=[
+    clampAng((Math.random()*2-1)*120),
+    clampAng((Math.random()*2-1)*120),
+    clampAng((Math.random()*2-1)*120)
+  ];
+  J.forEach(j=>{j.head=-180;j.tail=180;j.locked=false;j.rev=false});
+  syncJointInputs();updateJointMarkers();refresh();
+}
+
+function updateInfo(){
+  const td=getToolDir(),f=fk(S.angles,S.order,S.link1,S.link2,S.off,td),ax=S.order.split('');
+  document.getElementById('iPos').innerHTML=`X:<span class="v">${f.end[0].toFixed(3)}</span> Y:<span class="v">${f.end[1].toFixed(3)}</span> Z:<span class="v">${f.end[2].toFixed(3)}</span>`;
+  const eu=extractEuler(f.rot);
+  document.getElementById('iEul').innerHTML=`α:<span class="v">${eu.a.toFixed(1)}°</span> β:<span class="v">${eu.b.toFixed(1)}°</span> γ:<span class="v">${eu.g.toFixed(1)}°</span>`;
+  const R=f.rot,tr=R[0][0]+R[1][1]+R[2][2];let w,x,y,z;
+  if(tr>0){const s=.5/Math.sqrt(tr+1);w=.25/s;x=(R[2][1]-R[1][2])*s;y=(R[0][2]-R[2][0])*s;z=(R[1][0]-R[0][1])*s}
+  else if(R[0][0]>R[1][1]&&R[0][0]>R[2][2]){const s=2*Math.sqrt(1+R[0][0]-R[1][1]-R[2][2]);w=(R[2][1]-R[1][2])/s;x=.25*s;y=(R[0][1]+R[1][0])/s;z=(R[0][2]+R[2][0])/s}
+  else if(R[1][1]>R[2][2]){const s=2*Math.sqrt(1+R[1][1]-R[0][0]-R[2][2]);w=(R[0][2]-R[2][0])/s;x=(R[0][1]+R[1][0])/s;y=.25*s;z=(R[1][2]+R[2][1])/s}
+  else{const s=2*Math.sqrt(1+R[2][2]-R[0][0]-R[1][1]);w=(R[1][0]-R[0][1])/s;x=(R[0][2]+R[2][0])/s;y=(R[1][2]+R[2][1])/s;z=.25*s}
+  document.getElementById('iQuat').innerHTML=`w:<span class="v">${w.toFixed(4)}</span> x:<span class="v">${x.toFixed(4)}</span><br>y:<span class="v">${y.toFixed(4)}</span> z:<span class="v">${z.toFixed(4)}</span>`;
+  const T=[[R[0][0],R[0][1],R[0][2],f.end[0]],[R[1][0],R[1][1],R[1][2],f.end[1]],[R[2][0],R[2][1],R[2][2],f.end[2]],[0,0,0,1]];
+  let ms='<table>';for(let i=0;i<4;i++){ms+='<tr>';for(let j=0;j<4;j++)ms+=`<td>${T[i][j].toFixed(3)}</td>`;ms+='</tr>'}ms+='</table>';
+  document.getElementById('iMat').innerHTML=ms;
+  document.getElementById('iOrd').textContent=ax.join(' → ');
+}
+
+let dragState=null;
+function buildJointUI(){
+  const cont=document.getElementById('jointsContainer'),ax=S.order.split('');
+  cont.innerHTML='';
+  for(let i=0;i<3;i++){
+    const cls={X:'ax',Y:'ay',Z:'az'}[ax[i]];
+    const div=document.createElement('div');
+    div.className='joint-block';div.id='jb'+i;
+    div.innerHTML=`
+      <div class="jhead">
+        <span class="jlabel ${cls}">θ${i+1}(${ax[i]})</span>
+        <span class="jval" id="jval${i}">0.0°</span>
+        <button class="lbtn" id="lock${i}" onclick="toggleLock(${i})">🔓</button>
+        <button class="rbtn" id="rev${i}" onclick="toggleRev(${i})">→</button>
+      </div>
+      <div class="jtrack" id="jtrack${i}">
+        <div class="tfill" id="jfill${i}"></div>
+        <div class="mk head" id="jhMk${i}" title="头(起始)"></div>
+        <div class="mk tail" id="jtMk${i}" title="尾(目标)"></div>
+        <div class="thumb" id="jth${i}" title="当前角度"></div>
+      </div>
+      <div class="jinputs">
+        <span class="ay">头</span><input type="number" id="jh${i}" value="${J[i].head}" step="1" onchange="setHead(${i})">
+        <span>当前</span><input type="number" id="jc${i}" value="${S.angles[i].toFixed(1)}" step="1" onchange="setCur(${i})">
+        <span style="color:#b45309">尾</span><input type="number" id="jt${i}" value="${J[i].tail}" step="1" onchange="setTail(${i})">
+      </div>`;
+    cont.appendChild(div);
+    document.getElementById('jhMk'+i).addEventListener('pointerdown',e=>{e.stopPropagation();startDrag(e,i,'head')});
+    document.getElementById('jtMk'+i).addEventListener('pointerdown',e=>{e.stopPropagation();startDrag(e,i,'tail')});
+    document.getElementById('jth'+i).addEventListener('pointerdown',e=>{e.stopPropagation();if(!J[i].locked)startDrag(e,i,'thumb')});
+    document.getElementById('jtrack'+i).addEventListener('pointerdown',e=>{if(!J[i].locked)startDrag(e,i,'thumb')});
+  }
+  updateJointMarkers();
+}
+function startDrag(e,joint,type){dragState={joint,type};e.preventDefault();
+  document.addEventListener('pointermove',onDrag);document.addEventListener('pointerup',endDrag)}
+function onDrag(e){
+  if(!dragState)return;
+  const track=document.getElementById('jtrack'+dragState.joint);
+  const rect=track.getBoundingClientRect();
+  let p=clamp01((e.clientX-rect.left)/rect.width);
+  const angle=clampAng(p*360-180);const i=dragState.joint;
+  if(dragState.type==='head'){J[i].head=angle;document.getElementById('jh'+i).value=angle.toFixed(1)}
+  else if(dragState.type==='tail'){J[i].tail=angle;document.getElementById('jt'+i).value=angle.toFixed(1)}
+  else{S.angles[i]=angle;refresh()}
+  updateJointMarkers();
+}
+function endDrag(){dragState=null;document.removeEventListener('pointermove',onDrag);document.removeEventListener('pointerup',endDrag)}
+function updateJointMarkers(){
+  for(let i=0;i<3;i++){
+    document.getElementById('jval'+i).textContent=fmtA(S.angles[i]);
+    document.getElementById('jhMk'+i).style.left=pct(J[i].head)+'%';
+    document.getElementById('jtMk'+i).style.left=pct(J[i].tail)+'%';
+    document.getElementById('jth'+i).style.left=pct(S.angles[i])+'%';
+    const a=Math.min(J[i].head,S.angles[i]),b=Math.max(J[i].head,S.angles[i]);
+    document.getElementById('jfill'+i).style.left=pct(a)+'%';
+    document.getElementById('jfill'+i).style.width=(pct(b)-pct(a))+'%';
+    document.getElementById('lock'+i).textContent=J[i].locked?'🔒':'🔓';
+    document.getElementById('lock'+i).className='lbtn'+(J[i].locked?' on':'');
+    document.getElementById('rev'+i).textContent=J[i].rev?'←':'→';
+    document.getElementById('rev'+i).className='rbtn'+(J[i].rev?' on':'');
+    document.getElementById('jb'+i).className='joint-block'+(J[i].locked?' locked':'');
+    document.getElementById('jth'+i).className='thumb'+(J[i].locked?' locked-thumb':'');
+    const jc=document.getElementById('jc'+i);
+    if(document.activeElement!==jc)jc.value=S.angles[i].toFixed(1);
+  }
+}
+function syncJointInputs(){for(let i=0;i<3;i++){document.getElementById('jh'+i).value=J[i].head.toFixed(1);document.getElementById('jt'+i).value=J[i].tail.toFixed(1)}}
+function setHead(i){J[i].head=clampAng(parseFloat(document.getElementById('jh'+i).value)||0);updateJointMarkers()}
+function setTail(i){J[i].tail=clampAng(parseFloat(document.getElementById('jt'+i).value)||0);updateJointMarkers()}
+function setCur(i){if(J[i].locked)return;S.angles[i]=clampAng(parseFloat(document.getElementById('jc'+i).value)||0);updateJointMarkers();refresh()}
+function toggleLock(i){J[i].locked=!J[i].locked;updateJointMarkers()}
+function toggleRev(i){J[i].rev=!J[i].rev;updateJointMarkers()}
+
+function startSeq(from,to){
+  Seq.from=[...from];Seq.to=[...to];
+  for(let i=0;i<3;i++){if(J[i].rev){const t=Seq.from[i];Seq.from[i]=Seq.to[i];Seq.to[i]=t}}
+  Seq.active=true;Seq.phase=0;Seq.t=0;Seq.pause=0;
+  document.getElementById('seqBar').style.display='block';
+}
+function stopSeq(){Seq.active=false;document.getElementById('seqBar').style.display='none'}
+function updateSeq(dt){
+  if(!Seq.active)return;
+  if(Seq.pause>0){Seq.pause-=dt;return}
+  while(Seq.phase<3&&J[Seq.phase].locked){Seq.phase++;Seq.t=0}
+  if(Seq.phase>=3){finishSeq();return}
+  const spd=parseFloat(document.getElementById('seqSpd').value)||.6;
+  Seq.t+=dt*spd;
+  const cur=[...Seq.from];
+  for(let i=0;i<Seq.phase;i++)cur[i]=Seq.to[i];
+  const p=Seq.phase;
+  cur[p]=Seq.from[p]+(Seq.to[p]-Seq.from[p])*easeIO(clamp01(Seq.t));
+  S.angles=cur;
+  if(Seq.t>=1){Seq.phase++;Seq.t=0;if(Seq.phase>=3){finishSeq();return}Seq.pause=.5}
+  const ax=S.order.split(''),cp=Math.min(Seq.phase,2);
+  document.getElementById('seqPhase').textContent=`Phase ${cp+1}/3: θ${cp+1} 绕 ${ax[cp]} 轴`;
+  document.getElementById('seqAngle').textContent=`当前: ${S.angles[cp].toFixed(1)}° → 目标: ${Seq.to[cp].toFixed(1)}°`;
+  document.getElementById('seqFill').style.width=((cp+clamp01(Seq.t))/3*100)+'%';
+  updateJointMarkers();refresh();
+}
+function finishSeq(){
+  S.angles=[...Seq.to];
+  if(Seq.loop){S.angles=[...Seq.from];Seq.phase=0;Seq.t=0;Seq.pause=.8}
+  else{Seq.active=false;document.getElementById('seqBar').style.display='none'}
+  updateJointMarkers();refresh();
+}
+function playFK(){stopSeq();S.angles=[J[0].head,J[1].head,J[2].head];startSeq([...S.angles],[J[0].tail,J[1].tail,J[2].tail])}
+function playIK(){
+  if(!S.ikResult){document.getElementById('ikRes').innerHTML='<span style="color:#ef4444">请先求解IK</span>';return}
+  stopSeq();startSeq([...S.angles],[...S.ikResult]);
+}
+function resetAll(){
+  stopSeq();S.angles=[0,0,0];S.trail=[];S.grabbed=false;
+  J.forEach(j=>{j.head=-180;j.tail=180;j.locked=false;j.rev=false});
+  syncJointInputs();updateJointMarkers();refresh();
+}
+
+function setIKMode(m){
+  stopSeq();S.ikMode=m;
+  document.getElementById('ikPosTab').className='mt'+(m==='pos'?' on':'');
+  document.getElementById('ikOriTab').className='mt'+(m==='ori'?' on':'');
+  document.getElementById('ikPosPanel').style.display=m==='pos'?'block':'none';
+  document.getElementById('ikOriPanel').style.display=m==='ori'?'block':'none';
+  refresh();
+}
+function getTargetRotMatrix(){
+  const a=(parseFloat(document.getElementById('ikOA').value)||0)*D2R;
+  const b=(parseFloat(document.getElementById('ikOB').value)||0)*D2R;
+  const g=(parseFloat(document.getElementById('ikOG').value)||0)*D2R;
+  return m3(m3(rZ(g),rY(b)),rX(a));
+}
+
+function solveIK(){
+  stopSeq();S.grabbed=false;
+  const td=getToolDir();
+  if(S.ikMode==='pos'){
+    const tx=parseFloat(document.getElementById('ikX').value)||0;
+    const ty=parseFloat(document.getElementById('ikY').value)||0;
+    const tz=parseFloat(document.getElementById('ikZ').value)||0;
+    S.ikTarget=[tx,ty,tz];
+    const adj=autoAdjust([tx,ty,tz]);
+    S.ikResult=ikPosition([tx,ty,tz],S.order,S.link1,S.link2,S.off,td);
+    const f=fk(S.ikResult,S.order,S.link1,S.link2,S.off,td);
+    const err=Math.sqrt((f.end[0]-tx)**2+(f.end[1]-ty)**2+(f.end[2]-tz)**2);
+    let msg=`θ₁=${fmtA(S.ikResult[0])} θ₂=${fmtA(S.ikResult[1])} θ₃=${fmtA(S.ikResult[2])}<br>`;
+    if(adj)msg+=`<span style="color:#f59e0b">⚠ 偏移量自动调为 ${S.off.toFixed(2)}</span><br>`;
+    msg+=`<span style="color:${err<0.01?'#10b981':'#ef4444'}">位置误差 ${err.toFixed(6)} ${err<0.01?'✓':'⚠'}</span>`;
+    document.getElementById('ikRes').innerHTML=msg;
+  }else{
+    const targetR=getTargetRotMatrix();
+    S.ikTargetR=targetR;
+    S.ikResult=ikOrientation(targetR,S.order,S.link1,S.link2,S.off,td);
+    const f=fk(S.ikResult,S.order,S.link1,S.link2,S.off,td);
+    const Rerr=m3(targetR,t3(f.rot));
+    const errV=rotToErrVec(Rerr);const errAngle=v3l(errV)*R2D;
+    let msg=`θ₁=${fmtA(S.ikResult[0])} θ₂=${fmtA(S.ikResult[1])} θ₃=${fmtA(S.ikResult[2])}<br>`;
+    msg+=`<span style="color:${errAngle<0.5?'#10b981':'#ef4444'}">姿态误差 ${errAngle.toFixed(4)}° ${errAngle<0.5?'✓':'⚠'}</span>`;
+    document.getElementById('ikRes').innerHTML=msg;
+  }
+  for(let i=0;i<3;i++){
+    const a=S.ikResult[i];
+    if(a<J[i].head)J[i].head=Math.floor(a/10)*10-10;
+    if(a>J[i].tail)J[i].tail=Math.ceil(a/10)*10+10;
+  }
+  J[0].tail=S.ikResult[0];J[1].tail=S.ikResult[1];J[2].tail=S.ikResult[2];
+  syncJointInputs();updateJointMarkers();refresh();
+}
+
+function onOrder(){
+  stopSeq();
+  S.order=document.getElementById('selOrder').value;
+  const ax=S.order.split('');
+  document.getElementById('orderTip').textContent=`关节1绕${ax[0]} · 关节2绕${ax[1]} · 关节3绕${ax[2]}`;
+  buildJointUI();
+  recalcIKTarget(true);
+  refresh();
+}
+function recalcIKTarget(keepTail){
+  const td=getToolDir();
+  const tailAng=[J[0].tail,J[1].tail,J[2].tail];
+  const f0=fk(tailAng,S.order,S.link1,S.link2,S.off,td);
+  if(S.ikMode==='pos'){
+    S.ikTarget=[f0.end[0],f0.end[1],f0.end[2]];
+    document.getElementById('ikX').value=f0.end[0].toFixed(3);
+    document.getElementById('ikY').value=f0.end[1].toFixed(3);
+    document.getElementById('ikZ').value=f0.end[2].toFixed(3);
+    S.ikResult=[...tailAng];
+  }else{
+    S.ikTargetR=f0.rot;
+    const eu=extractEuler(f0.rot);
+    document.getElementById('ikOA').value=eu.a.toFixed(1);
+    document.getElementById('ikOB').value=eu.b.toFixed(1);
+    document.getElementById('ikOG').value=eu.g.toFixed(1);
+    S.ikResult=[...tailAng];
+  }
+  if(!keepTail){J[0].tail=S.ikResult[0];J[1].tail=S.ikResult[1];J[2].tail=S.ikResult[2];}
+  syncJointInputs();updateJointMarkers();
+}
+
+function linkChanged(){
+  S.link1.dx=Math.min(3,Math.max(-3,parseFloat(document.getElementById('d1x').value)||0));
+  S.link1.dy=Math.min(3,Math.max(-3,parseFloat(document.getElementById('d1y').value)||0));
+  S.link1.dz=Math.min(3,Math.max(-3,parseFloat(document.getElementById('d1z').value)||0));
+  S.link1.order=document.getElementById('ord1').value;
+  S.link2.dx=Math.min(3,Math.max(-3,parseFloat(document.getElementById('d2x').value)||0));
+  S.link2.dy=Math.min(3,Math.max(-3,parseFloat(document.getElementById('d2y').value)||0));
+  S.link2.dz=Math.min(3,Math.max(-3,parseFloat(document.getElementById('d2z').value)||0));
+  S.link2.order=document.getElementById('ord2').value;
+  refresh();
+}
+function sp(){S.off=Math.min(3,Math.max(-3,parseFloat(document.getElementById('rOff').value)));document.getElementById('nOff').value=S.off;refresh()}
+function sn(){S.off=Math.min(3,Math.max(-3,parseFloat(document.getElementById('nOff').value)||0));document.getElementById('rOff').value=S.off;document.getElementById('nOff').value=S.off;refresh()}
+function setJU(u){S.jUnit=u;
+  document.getElementById('jDeg').className='ub'+(u==='deg'?' on':'');
+  document.getElementById('jRad').className='ub'+(u==='rad'?' on':'');
+  updateJointMarkers();refresh()}
+function setToolMode(m){
+  S.toolMode=m;
+  document.getElementById('mtE').className='mt'+(m==='euler'?' on':'');
+  document.getElementById('mtP').className='mt'+(m==='pos'?' on':'');
+  document.getElementById('tabE').className='tab-body'+(m==='euler'?' on':'');
+  document.getElementById('tabP').className='tab-body'+(m==='pos'?' on':'');
+  if(m==='pos'){
+    const d=e2d(S.toolEuler.a*D2R,S.toolEuler.b*D2R,S.toolEuler.g*D2R);
+    S.toolPos={x:d[0]*S.off,y:d[1]*S.off,z:d[2]*S.off};
+    document.getElementById('pX').value=S.toolPos.x.toFixed(4);
+    document.getElementById('pY').value=S.toolPos.y.toFixed(4);
+    document.getElementById('pZ').value=S.toolPos.z.toFixed(4);clearAuto();
+  }else{
+    const e=d2e(n3([S.toolPos.x,S.toolPos.y,S.toolPos.z]));
+    S.toolEuler.a=e.a*R2D;S.toolEuler.b=e.b*R2D;syncEulerUI();
+  }
+  refresh();
+}
+function setTU(u){S.tUnit=u;
+  document.getElementById('tDeg').className='ub'+(u==='deg'?' on':'');
+  document.getElementById('tRad').className='ub'+(u==='rad'?' on':'');
+  for(let i=0;i<3;i++)document.getElementById('tU'+i).textContent=u==='deg'?'°':'rad';
+  syncEulerUI()}
+function syncEulerUI(){
+  const e=S.toolEuler,ids=['eA','eB','eG'],vals=[e.a,e.b,e.g];
+  for(let i=0;i<3;i++)document.getElementById(ids[i]).value=S.tUnit==='deg'?vals[i].toFixed(1):(vals[i]*D2R).toFixed(4)}
+function eulerChanged(){
+  let a=parseFloat(document.getElementById('eA').value)||0,b=parseFloat(document.getElementById('eB').value)||0,g=parseFloat(document.getElementById('eG').value)||0;
+  if(S.tUnit==='rad'){a*=R2D;b*=R2D;g*=R2D}
+  S.toolEuler={a,b,g};
+  const d=e2d(a*D2R,b*D2R,g*D2R);
+  S.toolPos={x:d[0]*S.off,y:d[1]*S.off,z:d[2]*S.off};
+  document.getElementById('pX').value=S.toolPos.x.toFixed(4);
+  document.getElementById('pY').value=S.toolPos.y.toFixed(4);
+  document.getElementById('pZ').value=S.toolPos.z.toFixed(4);
+  clearAuto();refresh()}
+function clearAuto(){['autoX','autoY','autoZ'].forEach(id=>document.getElementById(id).style.display='none');
+  ['pX','pY','pZ'].forEach(id=>document.getElementById(id).className='')}
+function posChanged(ch){
+  let x=parseFloat(document.getElementById('pX').value)||0,y=parseFloat(document.getElementById('pY').value)||0,z=parseFloat(document.getElementById('pZ').value)||0;
+  const L=Math.abs(S.off);clearAuto();
+  if(L<.001){S.toolPos={x:0,y:0,z:0};refresh();return}
+  if(ch==='x'||ch==='y'){const rem=L*L-x*x-y*y;z=rem>0?Math.sqrt(rem):0;
+    document.getElementById('pZ').value=z.toFixed(4);document.getElementById('pZ').className='auto';document.getElementById('autoZ').style.display='inline';
+  }else{const rem=L*L-x*x-z*z;y=rem>0?Math.sqrt(rem):0;
+    document.getElementById('pY').value=y.toFixed(4);document.getElementById('pY').className='auto';document.getElementById('autoY').style.display='inline';}
+  S.toolPos={x,y,z};
+  const e=d2e(n3([x,y,z]));S.toolEuler.a=e.a*R2D;S.toolEuler.b=e.b*R2D;
+  syncEulerUI();refresh()}
+function changeBg(){scene.background=new THREE.Color(document.getElementById('bgClr').value)}
+function refresh(){badges.forEach(b=>b.parentNode&&b.parentNode.removeChild(b));badges=[];buildArm();updateInfo()}
+
+function exportAnim(){
+  if(S.exporting)return;S.exporting=true;
+  const wasLoop=Seq.loop;Seq.loop=true;document.getElementById('ckLoop').checked=true;
+  playFK();
+  const recFps=parseInt(document.getElementById('recFps').value)||36;
+  const duration=8;
+  const stream=ren.domElement.captureStream(recFps);
+  let mime='video/webm';
+  if(typeof MediaRecorder!=='undefined')
+    for(const t of['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'])
+      if(MediaRecorder.isTypeSupported(t)){mime=t;break}
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:recFps>=60?12000000:8000000});
+  const chunks=[];
+  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+  rec.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`arm_${recFps}fps.webm`;a.click();
+    S.exporting=false;Seq.loop=wasLoop;document.getElementById('ckLoop').checked=wasLoop;
+    document.getElementById('exportOverlay').style.display='none';
+    document.getElementById('exportNote').textContent='✓ 录制完成 ('+recFps+'fps)';
+    setTimeout(()=>document.getElementById('exportNote').textContent='',3000)};
+  document.getElementById('exportOverlay').style.display='flex';
+  document.getElementById('exportInfo').textContent=`录制 ${duration}s @ ${recFps}fps ...`;
+  rec.start();setTimeout(()=>rec.stop(),duration*1000);
+}
+
+function exportFormulas(){
+  const ax=S.order.split(''),l1=S.link1,l2=S.link2,td=getToolDir();
+  const f=fk(S.angles,S.order,l1,l2,S.off,td),R=f.rot;
+  let t=`═══════════════════════════════════════\n  三轴机械臂运动学参数与公式\n═══════════════════════════════════════\n\n`;
+  t+=`【机构参数】\n  旋转顺序: ${ax.join(' → ')}\n`;
+  t+=`  杆1投影: X=${l1.dx} Y=${l1.dy} Z=${l1.dz} (序:${l1.order})\n`;
+  t+=`  杆2投影: X=${l2.dx} Y=${l2.dy} Z=${l2.dz} (序:${l2.order})\n`;
+  t+=`  执行器偏移: ${S.off}\n`;
+  t+=`  当前关节角: θ₁=${S.angles[0].toFixed(1)}° θ₂=${S.angles[1].toFixed(1)}° θ₃=${S.angles[2].toFixed(1)}°\n\n`;
+  t+=`【旋转矩阵公式 (${ax.join('→')})】\n  R = R_${ax[2]}(θ₃)·R_${ax[1]}(θ₂)·R_${ax[0]}(θ₁)\n\n`;
+  t+=`【当前旋转矩阵】\n  | ${R[0][0].toFixed(4)} ${R[0][1].toFixed(4)} ${R[0][2].toFixed(4)} |\n  | ${R[1][0].toFixed(4)} ${R[1][1].toFixed(4)} ${R[1][2].toFixed(4)} |\n  | ${R[2][0].toFixed(4)} ${R[2][1].toFixed(4)} ${R[2][2].toFixed(4)} |\n\n`;
+  const eu=extractEuler(R);
+  t+=`【欧拉角】\n  α=${eu.a.toFixed(2)}° β=${eu.b.toFixed(2)}° γ=${eu.g.toFixed(2)}°\n\n`;
+  t+=`【末端位置】\n  p=[${f.end[0].toFixed(4)}, ${f.end[1].toFixed(4)}, ${f.end[2].toFixed(4)}]\n\n`;
+  t+=`【IK算法】\n  位置IK: 牛顿法(3×3雅可比)\n  姿态IK: 牛顿法(旋转轴投影矩阵)\n  解算后自动扩展关节头尾范围\n═══════════════════════════════════════\n`;
+  document.getElementById('formulaContent').textContent=t;
+  document.getElementById('formulaModal').style.display='flex';
+}
+function downloadFormula(){
+  const blob=new Blob([document.getElementById('formulaContent').textContent],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='机械臂运动学公式.txt';a.click()}
+
+function importFormulaFile(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.name.toLowerCase().endsWith('.txt')){
+    alert('❌ 文件格式错误：仅支持 .txt 格式的公式文档！');
+    input.value='';return;
+  }
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    try{
+      if(!text.includes('三轴机械臂运动学参数与公式')){
+        alert('❌ 文档内容格式不正确：未检测到有效的公式文档标识头！\n请确保导入的是本工具导出的TXT公式文档。');
+        input.value='';return;
+      }
+      const orderMatch=text.match(/旋转顺序:\s*([XYZ]\s*→\s*[XYZ]\s*→\s*[XYZ])/);
+      const l1Match=text.match(/杆1投影:\s*X=([\-\d.]+)\s+Y=([\-\d.]+)\s+Z=([\-\d.]+)\s+\(序:(\d+)\)/);
+      const l2Match=text.match(/杆2投影:\s*X=([\-\d.]+)\s+Y=([\-\d.]+)\s+Z=([\-\d.]+)\s+\(序:(\d+)\)/);
+      const offMatch=text.match(/执行器偏移:\s*([\-\d.]+)/);
+      const angMatch=text.match(/当前关节角:\s*θ₁=([\-\d.]+)°\s+θ₂=([\-\d.]+)°\s+θ₃=([\-\d.]+)°/);
+
+      if(!orderMatch||!l1Match||!l2Match||!offMatch||!angMatch){
+        alert('❌ 文档内容格式不完整：缺少必要的参数段落！\n请确保导入的是完整导出的TXT公式文档。');
+        input.value='';return;
+      }
+
+      const orderStr=orderMatch[1].replace(/\s/g,'').replace(/→/g,'');
+      const validOrders=['ZYZ','XZY','XYZ','YXZ','YZX','ZXY','ZYX'];
+      if(validOrders.includes(orderStr)){
+        S.order=orderStr;
+        document.getElementById('selOrder').value=orderStr;
+        const ax=orderStr.split('');
+        document.getElementById('orderTip').textContent=`关节1绕${ax[0]} · 关节2绕${ax[1]} · 关节3绕${ax[2]}`;
+      }
+
+      S.link1.dx=parseFloat(l1Match[1]);S.link1.dy=parseFloat(l1Match[2]);S.link1.dz=parseFloat(l1Match[3]);S.link1.order=l1Match[4];
+      document.getElementById('d1x').value=S.link1.dx;document.getElementById('d1y').value=S.link1.dy;document.getElementById('d1z').value=S.link1.dz;document.getElementById('ord1').value=S.link1.order;
+
+      S.link2.dx=parseFloat(l2Match[1]);S.link2.dy=parseFloat(l2Match[2]);S.link2.dz=parseFloat(l2Match[3]);S.link2.order=l2Match[4];
+      document.getElementById('d2x').value=S.link2.dx;document.getElementById('d2y').value=S.link2.dy;document.getElementById('d2z').value=S.link2.dz;document.getElementById('ord2').value=S.link2.order;
+
+      S.off=parseFloat(offMatch[1]);
+      document.getElementById('rOff').value=S.off;document.getElementById('nOff').value=S.off;
+
+      S.angles=[parseFloat(angMatch[1]),parseFloat(angMatch[2]),parseFloat(angMatch[3])];
+
+      buildJointUI();
+      recalcIKTarget(true);
+      refresh();
+
+      document.getElementById('exportNote').innerHTML='<span style="color:#10b981">✓ 公式文档导入成功！所有参数已自动更新。</span>';
+      setTimeout(()=>{document.getElementById('exportNote').textContent=''},4000);
+    }catch(err){
+      alert('❌ 导入解析失败：'+err.message+'\n请确认文件内容格式正确。');
+    }
+    input.value='';
+  };
+  reader.onerror=function(){
+    alert('❌ 文件读取失败，请重试！');
+    input.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function renderAll(){
+  const vp=document.getElementById('viewport'),w=vp.clientWidth,h=vp.clientHeight;
+  ren.setViewport(0,0,w,h);ren.setScissorTest(false);ren.render(scene,cam);
+  const sz=100,pad=10;
+  ren.clearDepth();ren.setScissorTest(true);
+  ren.setScissor(pad,h-sz-pad,sz,sz);ren.setViewport(pad,h-sz-pad,sz,sz);
+  miniCam.quaternion.copy(cam.quaternion);miniCam.updateMatrixWorld();
+  ren.render(miniSc,miniCam);ren.setScissorTest(false);
+}
+let fc=0,lt=performance.now(),prevT=performance.now();
+function animate(){
+  requestAnimationFrame(animate);
+  const now=performance.now(),dt=Math.min((now-prevT)/1000,.05);prevT=now;
+  fc++;if(now-lt>=1000){document.getElementById('fps').textContent='FPS: '+fc;fc=0;lt=now}
+  updateSeq(dt);ctrl.update();renderAll();
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  init();
+  eulerChanged();
+  buildJointUI();
+  recalcIKTarget(true);
+  /* ★ 优化2: 就绪提示同步更新 */
+  document.getElementById('ikRes').innerHTML='<span style="color:#10b981">✓ 就绪 · ZYZ默认 · 相机(-5,7.5,-5)→原点</span>';
+  refresh();
+});
+</script>
+</body>
+</html>
